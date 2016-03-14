@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+
+        <variable
+            name="settingsModel"
+            type="com.seductive.tools.cameraholder.sample.ui.model.CameraSettingsViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_camera_selection"
+            android:textAllCaps="true"
+            android:textSize="@dimen/text_size_medium"
+            android:layout_marginBottom="20dp" />
+
+        <RadioGroup
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp">
+
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="@{settingsModel.isCameraTypeFront}"
+                android:clickable="@{settingsModel.frontCameraAvailable}"
+                android:focusable="@{settingsModel.frontCameraAvailable}"
+                android:onClick="@{settingsModel.onClickView}"
+                android:paddingLeft="5dp"
+                android:tag="@{settingsModel.TAG_FRONT_CAMERA}"
+                android:text="@string/label_front_camera"
+                android:textColor="@{settingsModel.frontCameraAvailable ? @android:color/tertiary_text_dark : @color/grey_light}"
+                android:textSize="@dimen/text_size_medium" />
+
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="@{settingsModel.isCameraTypeBack}"
+                android:onClick="@{settingsModel.onClickView}"
+                android:tag="@{settingsModel.TAG_BACK_CAMERA}"
+                android:text="@string/label_back_camera"
+                android:textSize="@dimen/text_size_medium"
+                android:layout_marginLeft="25dp"
+                android:paddingLeft="5dp" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_resolution"
+                android:textAllCaps="true"
+                android:textSize="@dimen/text_size_medium"
+                android:layout_marginBottom="20dp" />
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <android.support.v7.widget.AppCompatSpinner
+                    android:id="@+id/resolution_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:entries="@{settingsModel.isCameraTypeFront ? settingsModel.frontFaceCameraResolutions : settingsModel.backFaceCameraResolutions}"
+                    android:gravity="right"
+                    android:setOnItemSelectedListener="@{settingsModel.resolutionChangeListener}"
+                    android:setSelection="@{settingsModel.selection}" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="@string/label_focus"
+            android:textAllCaps="true"
+            android:textSize="@dimen/text_size_medium"
+            android:layout_marginBottom="20dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:gravity="left"
+                android:paddingRight="5dp"
+                android:text="@string/label_near"
+                android:textSize="@dimen/text_size_small" />
+
+            <SeekBar
+                android:id="@+id/focus_progress_bar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="6"
+                android:enabled="@{settingsModel.cameraFocusAvailable}"
+                android:max="@integer/focus_tick_count"
+                android:progress="@{((int)(settingsModel.focus * 10))}"
+                android:setOnSeekBarChangeListener="@{settingsModel.seekBarChangeListener}"
+                android:tag="@{settingsModel.TAG_SEEK_BAR_FOCUS}" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:paddingLeft="5dp"
+                android:text="@string/label_far"
+                android:textSize="@dimen/text_size_small" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="0.5"
+                android:gravity="right"
+                android:text="@{String.valueOf(settingsModel.focus)}"
+                android:textSize="@dimen/text_size_medium" />
+        </LinearLayout>
+    </LinearLayout>
+</layout>

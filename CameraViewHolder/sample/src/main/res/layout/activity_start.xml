@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="model"
+            type="com.seductive.tools.cameraholder.sample.ui.model.ControllerViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        android:orientation="vertical"
+        tools:context=".ui.StartActivity">
+
+        <FrameLayout
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:id="@+id/activityMain_bottomTabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            android:paddingBottom="10dp"
+            android:paddingTop="10dp">
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <TextView
+                    style="@style/LightTextStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="bottom|center_horizontal"
+                    android:onClick="@{model.onCameraSettingsSelected}"
+                    android:text="@string/label_camera_settings"
+                    android:textColor="@{(model.selectedTab == 0) ? @color/bottom_bar_text_active : @color/bottom_bar_text_inactive }"
+                    android:textSize="@dimen/text_size_medium" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <TextView
+                    style="@style/LightTextStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:onClick="@{model.onCameraSelected}"
+                    android:text="@string/label_camera_view"
+                    android:textColor="@{(model.selectedTab == 1) ? @color/bottom_bar_text_active : @color/bottom_bar_text_inactive }"
+                    android:textSize="@dimen/text_size_medium" />
+            </FrameLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+</layout>

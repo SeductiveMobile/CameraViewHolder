@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">sample</string>
+
+    <string name="label_camera_settings">Camera settings</string>
+    <string name="label_camera_view">Camera view</string>
+
+    <string name="start_description_label">This is sample application which demonstrate the usage of Camera
+        in Android. Application checks API level and for API 23 camera2 API is used, otherwise camera1.</string>
+    <string name="start_btn_label">Start usage</string>
+
+    <string name="no_resolutions_exception_msg">No available resolutions for camera. Please, clear app data,
+        check camera permission is available and launch application one more time.</string>
+
+    <string name="camera_permission_not_granted_msg">Permission for camera not granted, unable to start application</string>
+
+    <string name="label_camera_selection">Camera selection</string>
+    <string name="label_front_camera">Front camera</string>
+    <string name="label_back_camera">Back camera</string>
+    <string name="label_resolution">Resolution</string>
+    <string name="label_focus">Focus</string>
+    <string name="label_near">Near</string>
+    <string name="label_far">Far</string>
+
+</resources>

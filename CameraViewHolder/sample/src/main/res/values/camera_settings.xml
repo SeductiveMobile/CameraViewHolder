@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="corners_tick_count">46</integer>
+    <integer name="corners_min">3</integer>
+    <integer name="corners_max">49</integer>
+
+    <integer name="images_number_tick_count">91</integer>
+    <integer name="images_number_min">9</integer>
+    <integer name="images_number_max">100</integer>
+
+    <integer name="focus_tick_count">10</integer>
+</resources>
