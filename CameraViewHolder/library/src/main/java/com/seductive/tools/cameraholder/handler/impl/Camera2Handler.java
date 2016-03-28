@@ -22,17 +22,20 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.seductive.tools.cameraholder.async.BaseAsyncTask;
+import com.seductive.tools.cameraholder.handler.CameraCaptureListener;
+import com.seductive.tools.cameraholder.handler.CameraStateListener;
 import com.seductive.tools.cameraholder.handler.ICameraHandler;
-import com.seductive.tools.cameraholder.model.SettingsModel;
+import com.seductive.tools.cameraholder.model.Settings;
 import com.seductive.tools.cameraholder.ui.camera2.AutoFitTextureView;
+import com.seductive.tools.cameraholder.utils.CameraUtils;
 import com.seductive.tools.cameraholder.utils.UIUtils;
 
 import java.util.Arrays;
@@ -58,10 +61,11 @@ public class Camera2Handler implements ICameraHandler {
     private AutoFitTextureView mCameraPreview;
 
     private Context mContext;
-    private CameraStateListener cameraStateListener;
+    private CameraStateListener mCameraStateListener;
+    private CameraCaptureListener mCameraCaptureListener;
     private CAMERA_STATE mCurrCameraState = CAMERA_STATE.IDLE;
     private CAMERA_STATE mRequestedCameraState;
-    private SettingsModel settingsModel;
+    private Settings settings;
     private float mFocus;
 
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
@@ -101,6 +105,7 @@ public class Camera2Handler implements ICameraHandler {
         public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request,
                                        @NonNull TotalCaptureResult result) {
             process(result);
+            Log.d("TAG", "onCaptureCompleted");
         }
     };
 
@@ -150,36 +155,41 @@ public class Camera2Handler implements ICameraHandler {
                 Y.getBuffer().get(data, 0, Yb);
                 U.getBuffer().get(data, Yb, Ub);
                 V.getBuffer().get(data, Yb + Ub, Vb);
-                if (cameraStateListener != null)
-                    cameraStateListener.onPreviewReceived(data);
+                if (mCameraCaptureListener != null) {
+                    mCameraCaptureListener.onStreamPreviewReceived(data);
+                }
             } catch (NullPointerException ex) {
                 ex.printStackTrace();
             } finally {
-                if (img != null)
+                if (img != null) {
                     img.close();
-
+                }
             }
         }
     };
 
-    public Camera2Handler(Context context, String cameraId, SettingsModel settingsModel) {
-        this.settingsModel = settingsModel;
-        this.mCameraId = cameraId;
+    public Camera2Handler(Context context) {
         this.mContext = context;
     }
 
     @Override
-    public void setup(View rootView, CameraStateListener listener) {
-        mCameraPreview = new AutoFitTextureView(mContext);
-        cameraStateListener = listener;
-        mRequestedCameraState = null;
-        mFocus = settingsModel.getFocus();
+    public void setup(View cameraView, Settings settings, CameraStateListener cameraStateListener,
+                      CameraCaptureListener cameraCaptureListener) {
+        this.mCameraPreview = (AutoFitTextureView) cameraView;
+        this.settings = settings;
+        this.mCameraId = settings.isCameraTypeBack() ? String.valueOf(CameraUtils.getBackFacingCameraId()) :
+                String.valueOf(CameraUtils.getFrontFacingCameraId());
+        this.mCameraStateListener = cameraStateListener;
+        this.mCameraCaptureListener = cameraCaptureListener;
+        this.mRequestedCameraState = null;
+        this.mFocus = settings.getFocus();
     }
 
     @Override
     public void release() {
         mCameraPreview = null;
-        cameraStateListener = null;
+        mCameraStateListener = null;
+        mCameraCaptureListener = null;
     }
 
     @Override
@@ -202,6 +212,17 @@ public class Camera2Handler implements ICameraHandler {
             setupOutputAndCreateCameraTask();
         } else {
             mCameraPreview.setSurfaceTextureListener(mSurfaceTextureListener);
+        }
+    }
+
+    @Override
+    public void takePicture() {
+        if (mCaptureSession != null) {
+            try {
+                mCaptureSession.capture(mPreviewRequest, mCaptureCallback, mBackgroundHandler);
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -268,8 +289,8 @@ public class Camera2Handler implements ICameraHandler {
                                 // Auto focus should be continuous for camera preview.
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                                         CaptureRequest.CONTROL_AF_MODE_OFF);
-                                if (settingsModel.isCameraTypeBack() && settingsModel.isBackCameraFocusAvailable() ||
-                                        settingsModel.isCameraTypeFront() && settingsModel.isFrontCameraFocusAvailable()) {
+                                if (settings.isCameraTypeBack() && settings.isBackCameraFocusAvailable() ||
+                                        settings.isCameraTypeFront() && settings.isFrontCameraFocusAvailable()) {
                                     mPreviewRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, mCameraFocus);
                                 }
                                 // Flash is automatically enabled when necessary.
@@ -286,7 +307,7 @@ public class Camera2Handler implements ICameraHandler {
 
                         @Override
                         public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                            UIUtils.showToastMsg(mContext, "Failed");
+                            UIUtils.showToastMsg(mContext, "Configuration failed");
                         }
                     }, null
             );
@@ -316,13 +337,12 @@ public class Camera2Handler implements ICameraHandler {
                 if (map == null) {
                     continue;
                 }
-                mPreviewSize = new Size(settingsModel.getResolutionWidth(), settingsModel.getResolutionHeight());
+                mPreviewSize = new Size(settings.getResolutionWidth(), settings.getResolutionHeight());
 
                 // For still image captures, we use the largest available size.
                 mImageReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(),
                         ImageFormat.YUV_420_888, /*maxImages*/2);
-                mImageReader.setOnImageAvailableListener(
-                        mOnImageAvailableListener, mBackgroundHandler);
+                mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
 
                 // We fit the aspect ratio of TextureView to the size of preview we picked.
                 int orientation = mContext.getResources().getConfiguration().orientation;
@@ -335,8 +355,8 @@ public class Camera2Handler implements ICameraHandler {
                 // Check if the flash is supported.
                 Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
                 mFlashSupported = available == null ? false : available;
-                if (settingsModel.isCameraTypeBack() && settingsModel.isBackCameraFocusAvailable() ||
-                        settingsModel.isCameraTypeFront() && settingsModel.isFrontCameraFocusAvailable()) {
+                if (settings.isCameraTypeBack() && settings.isBackCameraFocusAvailable() ||
+                        settings.isCameraTypeFront() && settings.isFrontCameraFocusAvailable()) {
                     Object minFocusDistanceObj = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
                     float minFocusDistance = minFocusDistanceObj != null ? (float) minFocusDistanceObj : 1f;
 
@@ -369,12 +389,13 @@ public class Camera2Handler implements ICameraHandler {
             mRequestedCameraState = null;
             return;
         }
-        notifyListener();
+        notifyListenerStateChanged();
     }
 
-    private void notifyListener() {
-        if (cameraStateListener != null)
-            cameraStateListener.onStateChanged(mCurrCameraState);
+    private void notifyListenerStateChanged() {
+        if (mCameraStateListener != null) {
+            mCameraStateListener.onStateChanged(mCurrCameraState);
+        }
     }
 
     private void startBackgroundThread() {

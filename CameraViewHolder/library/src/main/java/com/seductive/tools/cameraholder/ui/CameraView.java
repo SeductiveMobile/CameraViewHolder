@@ -4,82 +4,92 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import com.seductive.tools.cameraholder.CameraActionListener;
+import com.seductive.tools.cameraholder.handler.CameraCaptureListener;
+import com.seductive.tools.cameraholder.handler.CameraStateListener;
 import com.seductive.tools.cameraholder.handler.ICameraHandler;
 import com.seductive.tools.cameraholder.handler.impl.Camera1Handler;
 import com.seductive.tools.cameraholder.handler.impl.Camera2Handler;
-import com.seductive.tools.cameraholder.model.SettingsModel;
+import com.seductive.tools.cameraholder.model.Settings;
 import com.seductive.tools.cameraholder.ui.camera1.CameraPreview;
 import com.seductive.tools.cameraholder.ui.camera2.AutoFitTextureView;
-import com.seductive.tools.cameraholder.utils.CameraUtils;
 
 public class CameraView extends FrameLayout {
 
-    private Context mContext;
-
     private ICameraHandler mCameraHandler;
-    private CameraActionListener mCameraActionListener;
-    private SettingsModel mSettingsModel;
+    private CameraStateListener mCameraStateListener;
+    private CameraCaptureListener mCameraCaptureListener;
 
+    //TODO default settings
+    private Settings mSettings;
+
+    private View mConcreteCameraView;
 
     public CameraView(Context context) {
         super(context);
-        setup();
+        init();
     }
 
     public CameraView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setup();
+        init();
     }
 
     public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        setup();
+        init();
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public CameraView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        setup();
+        init();
     }
 
-    private void setup() {
-        mSettingsModel = new SettingsModel();
-        createPreview();
-        createHandler();
+    private void init() {
+        mConcreteCameraView = Build.VERSION.SDK_INT < Build.VERSION_CODES.M ? new AutoFitTextureView(getContext()) :
+                new CameraPreview(getContext());
+        mCameraHandler = Build.VERSION.SDK_INT < Build.VERSION_CODES.M ? new Camera2Handler(getContext()) :
+                new Camera1Handler(getContext());
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        params.gravity = Gravity.CENTER;
+        addView(mConcreteCameraView, 0, params);
     }
 
-    private void createPreview() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                (mSettingsModel.isCameraTypeBack() && mSettingsModel.isBackCameraFocusAvailable() ||
-                        mSettingsModel.isCameraTypeFront())) {
-            addView(new AutoFitTextureView(getContext()));
-        } else {
-            addView(new CameraPreview(getContext(), 1080, 1920));
-        }
+    public void takePicture() {
+        mCameraHandler.takePicture();
     }
 
-    private void createHandler() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                (mSettingsModel.isCameraTypeBack() && mSettingsModel.isBackCameraFocusAvailable() ||
-                        mSettingsModel.isCameraTypeFront())) {
-            mCameraHandler = new Camera2Handler(getContext(), String.valueOf(mSettingsModel.isCameraTypeBack() ?
-                    CameraUtils.getBackFacingCameraId() : CameraUtils.getFrontFacingCameraId()), mSettingsModel);
-        } else {
-            mCameraHandler = new Camera1Handler(mSettingsModel.isCameraTypeBack() ?
-                    CameraUtils.getBackFacingCameraId() : CameraUtils.getFrontFacingCameraId(), mSettingsModel);
-        }
+    public void setupCamera() {
+        mCameraHandler.setup(mConcreteCameraView, mSettings, mCameraStateListener, mCameraCaptureListener);
+        mCameraHandler.openCamera();
     }
 
-    public void setSettingsModel(SettingsModel settingsModel) {
-        this.mSettingsModel = settingsModel;
-        //TODO
-        setup();
+    public void releaseCamera() {
+        mCameraHandler.closeCamera();
+        mCameraHandler.release();
     }
 
-    public void setCameraActionListener(CameraActionListener cameraActionListener) {
-        this.mCameraActionListener = cameraActionListener;
+    /**
+     * @param settings
+     */
+    public void setSettingsModel(Settings settings) {
+        this.mSettings = settings;
+    }
+
+    /**
+     * @param cameraStateListener
+     */
+    public void setCameraStateListener(CameraStateListener cameraStateListener) {
+        this.mCameraStateListener = cameraStateListener;
+    }
+
+    public void setCameraCaptureListener(CameraCaptureListener cameraCaptureListener) {
+        this.mCameraCaptureListener = cameraCaptureListener;
     }
 }

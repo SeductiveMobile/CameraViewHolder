@@ -4,7 +4,7 @@
     <data>
 
         <variable
-            name="settingsModel"
+            name="settings"
             type="com.seductive.tools.cameraholder.sample.ui.model.CameraSettingsViewModel" />
     </data>
 
@@ -31,22 +31,22 @@
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="@{settingsModel.isCameraTypeFront}"
-                android:clickable="@{settingsModel.frontCameraAvailable}"
-                android:focusable="@{settingsModel.frontCameraAvailable}"
-                android:onClick="@{settingsModel.onClickView}"
+                android:checked="@{settings.isCameraTypeFront}"
+                android:clickable="@{settings.frontCameraAvailable}"
+                android:focusable="@{settings.frontCameraAvailable}"
+                android:onClick="@{settings.onClickView}"
                 android:paddingLeft="5dp"
-                android:tag="@{settingsModel.TAG_FRONT_CAMERA}"
+                android:tag="@{settings.TAG_FRONT_CAMERA}"
                 android:text="@string/label_front_camera"
-                android:textColor="@{settingsModel.frontCameraAvailable ? @android:color/tertiary_text_dark : @color/grey_light}"
+                android:textColor="@{settings.frontCameraAvailable ? @android:color/tertiary_text_dark : @color/grey_light}"
                 android:textSize="@dimen/text_size_medium" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="@{settingsModel.isCameraTypeBack}"
-                android:onClick="@{settingsModel.onClickView}"
-                android:tag="@{settingsModel.TAG_BACK_CAMERA}"
+                android:checked="@{settings.isCameraTypeBack}"
+                android:onClick="@{settings.onClickView}"
+                android:tag="@{settings.TAG_BACK_CAMERA}"
                 android:text="@string/label_back_camera"
                 android:textSize="@dimen/text_size_medium"
                 android:layout_marginLeft="25dp"
@@ -77,10 +77,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right"
-                    android:entries="@{settingsModel.isCameraTypeFront ? settingsModel.frontFaceCameraResolutions : settingsModel.backFaceCameraResolutions}"
+                    android:entries="@{settings.isCameraTypeFront ? settings.frontFaceCameraResolutions : settings.backFaceCameraResolutions}"
                     android:gravity="right"
-                    android:setOnItemSelectedListener="@{settingsModel.resolutionChangeListener}"
-                    android:setSelection="@{settingsModel.selection}" />
+                    android:setOnItemSelectedListener="@{settings.resolutionChangeListener}"
+                    android:setSelection="@{settings.selection}" />
             </FrameLayout>
         </LinearLayout>
 
@@ -112,12 +112,12 @@
                 android:id="@+id/focus_progress_bar"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="6"
-                android:enabled="@{settingsModel.cameraFocusAvailable}"
+                android:layout_weight="5"
+                android:enabled="@{settings.cameraFocusAvailable}"
                 android:max="@integer/focus_tick_count"
-                android:progress="@{((int)(settingsModel.focus * 10))}"
-                android:setOnSeekBarChangeListener="@{settingsModel.seekBarChangeListener}"
-                android:tag="@{settingsModel.TAG_SEEK_BAR_FOCUS}" />
+                android:progress="@{((int)(settings.focus * 10))}"
+                android:setOnSeekBarChangeListener="@{settings.seekBarChangeListener}"
+                android:tag="@{settings.TAG_SEEK_BAR_FOCUS}" />
 
             <TextView
                 android:layout_width="0dp"
@@ -132,9 +132,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:layout_weight="0.5"
+                android:layout_weight="1"
                 android:gravity="right"
-                android:text="@{String.valueOf(settingsModel.focus)}"
+                android:text="@{String.valueOf(settings.focus)}"
                 android:textSize="@dimen/text_size_medium" />
         </LinearLayout>
     </LinearLayout>

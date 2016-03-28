@@ -44,15 +44,15 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private int mPreviewWidth, mPreviewHeight;
 
     public CameraPreview(Context context) {
-        this(context, 0, 0);
-    }
-
-    public CameraPreview(Context context, int previewWidth, int previewHeight) {
         super(context);
         this.mHolder = getHolder();
         this.mHolder.addCallback(this);
-        this.mPreviewWidth = previewWidth == 0 ? UIUtils.getScreenWidth(context) : previewWidth;
-        this.mPreviewHeight = previewHeight == 0 ? UIUtils.getScreenHeight(context) : previewHeight;
+    }
+
+    //TODO validate preview params
+    public void setPreviewParams(int previewWidth, int previewHeight) {
+        this.mPreviewWidth = previewWidth <= 0 ? UIUtils.getScreenWidth(getContext()) : previewWidth;
+        this.mPreviewHeight = previewHeight <= 0 ? UIUtils.getScreenHeight(getContext()) : previewHeight;
     }
 
     /**
@@ -105,11 +105,14 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             // ignore: tried to stop a non-existent preview
         }
         setCamera(camera);
-        try {
-            mCamera.setPreviewDisplay(mHolder);
-            mCamera.startPreview();
-        } catch (Exception e) {
-            e.printStackTrace();
+
+        if (mCamera != null) {
+            try {
+                mCamera.setPreviewDisplay(mHolder);
+                mCamera.startPreview();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -145,11 +148,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
      * Method to set OnPreviewUpdateListener instance
      *
      * @param previewUpdateListener listener instance
-     * @return CameraPreview instance
      */
-    public CameraPreview setPreviewUpdateListener(OnPreviewUpdateListener previewUpdateListener) {
+    public void setPreviewUpdateListener(OnPreviewUpdateListener previewUpdateListener) {
         this.previewUpdateListener = previewUpdateListener;
-        return this;
     }
 
     /**
@@ -181,7 +182,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             float widthRatio = (float) actualWidth / mPreviewWidth;
             float heightRatio = (float) actualHeight / mPreviewHeight;
 
-            float maxRatio = Math.min(widthRatio, heightRatio);
+            float maxRatio = Math.max(widthRatio, heightRatio);
 
             int scaledWidth = (int) (mPreviewWidth * maxRatio);
             int scaledHeight = (int) (mPreviewHeight * maxRatio);

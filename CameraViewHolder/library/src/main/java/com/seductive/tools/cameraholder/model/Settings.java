@@ -1,6 +1,6 @@
 package com.seductive.tools.cameraholder.model;
 
-public class SettingsModel {
+public class Settings {
 
     public enum CAMERA_TYPE {
         BACK("Back"),
@@ -30,7 +30,7 @@ public class SettingsModel {
         return focus;
     }
 
-    public SettingsModel setFocus(float focus) {
+    public Settings setFocus(float focus) {
         this.focus = focus;
         return this;
     }
@@ -39,7 +39,7 @@ public class SettingsModel {
         return cameraType;
     }
 
-    public SettingsModel setCameraType(CAMERA_TYPE cameraType) {
+    public Settings setCameraType(CAMERA_TYPE cameraType) {
         this.cameraType = cameraType;
         return this;
     }
@@ -56,7 +56,7 @@ public class SettingsModel {
         return backCameraFocusAvailable;
     }
 
-    public SettingsModel setBackCameraFocusAvailable(boolean backCameraFocusAvailable) {
+    public Settings setBackCameraFocusAvailable(boolean backCameraFocusAvailable) {
         this.backCameraFocusAvailable = backCameraFocusAvailable;
         return this;
     }
@@ -65,16 +65,25 @@ public class SettingsModel {
         return frontCameraFocusAvailable;
     }
 
-    public SettingsModel setFrontCameraFocusAvailable(boolean frontCameraFocusAvailable) {
+    public Settings setFrontCameraFocusAvailable(boolean frontCameraFocusAvailable) {
         this.frontCameraFocusAvailable = frontCameraFocusAvailable;
         return this;
+    }
+
+    public Settings setResolution(String resolution) {
+        this.resolution = resolution;
+        return this;
+    }
+
+    public String getResolution() {
+        return resolution;
     }
 
     public int getResolutionHeight() {
         return resolutionHeight;
     }
 
-    public SettingsModel setResolutionHeight(int resolutionHeight) {
+    public Settings setResolutionHeight(int resolutionHeight) {
         this.resolutionHeight = resolutionHeight;
         return this;
     }
@@ -83,7 +92,7 @@ public class SettingsModel {
         return resolutionWidth;
     }
 
-    public SettingsModel setResolutionWidth(int resolutionWidth) {
+    public Settings setResolutionWidth(int resolutionWidth) {
         this.resolutionWidth = resolutionWidth;
         return this;
     }

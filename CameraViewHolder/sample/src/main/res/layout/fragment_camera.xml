@@ -4,19 +4,34 @@
     <data>
 
         <variable
-            name="settingsModel"
+            name="settings"
             type="com.seductive.tools.cameraholder.sample.ui.model.CameraSettingsViewModel" />
     </data>
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:orientation="vertical">
 
         <com.seductive.tools.cameraholder.ui.CameraView
+            android:id="@+id/camera_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true" />
 
-    </LinearLayout>
+        <ImageButton
+            android:id="@+id/take_picture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:src="@drawable/ic_camera"
+            android:background="@drawable/btn_bg"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:layout_marginBottom="10dp" />
+
+    </RelativeLayout>
 </layout>

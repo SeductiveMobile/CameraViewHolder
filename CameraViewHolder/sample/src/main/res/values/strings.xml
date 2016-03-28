@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">sample</string>
+    <string name="app_name">CameraViewHolder</string>
 
     <string name="label_camera_settings">Camera settings</string>
     <string name="label_camera_view">Camera view</string>

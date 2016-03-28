@@ -1,17 +1,21 @@
 package com.seductive.tools.cameraholder.handler.impl;
 
+import android.content.Context;
 import android.hardware.Camera;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.RelativeLayout;
 
-import com.seductive.tools.cameraholder.R;
-import com.seductive.tools.cameraholder.model.SettingsModel;
 import com.seductive.tools.cameraholder.async.BaseAsyncTask;
+import com.seductive.tools.cameraholder.handler.CameraCaptureListener;
+import com.seductive.tools.cameraholder.handler.CameraStateListener;
 import com.seductive.tools.cameraholder.handler.ICameraHandler;
+import com.seductive.tools.cameraholder.model.Settings;
 import com.seductive.tools.cameraholder.ui.camera1.CameraPreview;
+import com.seductive.tools.cameraholder.utils.CameraUtils;
+import com.seductive.tools.cameraholder.utils.UIUtils;
 
 public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUpdateListener {
+
+    private Context mContext;
 
     private int mResolutionWidth;
     private int mResolutionHeight;
@@ -19,26 +23,45 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
     private Camera mCamera;
     private CameraPreview mPreview;
     private OpenCameraTask mOpenCameraTask;
-    private CameraStateListener cameraStateListener;
+    private CameraStateListener mCameraStateListener;
+    private CameraCaptureListener mCameraCaptureListener;
     private CAMERA_STATE mCurrCameraState = CAMERA_STATE.IDLE;
     private CAMERA_STATE mRequestedCameraState;
 
-    public Camera1Handler(int cameraId, SettingsModel settingsModel) {
-        //TODO
-//        mResolutionWidth = settingsModel.getResolutionWidth();
-//        mResolutionHeight = settingsModel.getResolutionHeight();
-        mResolutionWidth = 1080;
-        mResolutionHeight = 1920;
-        this.mCameraId = cameraId;
+    private Camera.PictureCallback mJpegPictureCallback=new Camera.PictureCallback() {
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera) {
+            if (mCameraCaptureListener != null) {
+                mCameraCaptureListener.onSinglePreviewReceived(data);
+            }
+        }
+    };
+
+    public Camera1Handler(Context context) {
+        this.mContext = context;
     }
 
     @Override
-    public void setup(View rootView, CameraStateListener listener) {
-        cameraStateListener = listener;
-        mPreview = new CameraPreview(rootView.getContext(), mResolutionWidth, mResolutionHeight).setPreviewUpdateListener(this);
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        params.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
-//        ((RelativeLayout) rootView.findViewById(R.id.camera_preview)).addView(mPreview, 0, params);
+    public void setup(View cameraView, Settings settings, CameraStateListener cameraStateListener,
+                      CameraCaptureListener cameraCaptureListener) {
+
+        mPreview = (CameraPreview) cameraView;
+
+        mPreview.setPreviewParams(mResolutionWidth, mResolutionHeight);
+        mPreview.setPreviewUpdateListener(this);
+        //TODO validate preview size
+        if (settings == null) {
+            mResolutionWidth = UIUtils.getScreenWidth(mContext);
+            mResolutionHeight = UIUtils.getScreenHeight(mContext);
+        } else {
+            mResolutionWidth = settings.getResolutionWidth();
+            mResolutionHeight = settings.getResolutionHeight();
+        }
+
+        this.mCameraId = settings == null || settings.isCameraTypeBack() ?
+                CameraUtils.getBackFacingCameraId() : CameraUtils.getFrontFacingCameraId();
+        this.mCameraStateListener = cameraStateListener;
+        this.mCameraCaptureListener = cameraCaptureListener;
         mRequestedCameraState = null;
     }
 
@@ -56,9 +79,16 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
     }
 
     @Override
+    public void takePicture() {
+        if (mCamera != null) {
+            mCamera.takePicture(null, null, mJpegPictureCallback);
+        }
+    }
+
+    @Override
     public void onUpdatePreview(byte[] previewData) {
-        if (cameraStateListener != null) {
-            cameraStateListener.onPreviewReceived(previewData);
+        if (mCameraCaptureListener != null) {
+            mCameraCaptureListener.onStreamPreviewReceived(previewData);
         }
     }
 
@@ -106,8 +136,8 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
     }
 
     private void notifyListener() {
-        if (cameraStateListener != null)
-            cameraStateListener.onStateChanged(mCurrCameraState);
+        if (mCameraStateListener != null)
+            mCameraStateListener.onStateChanged(mCurrCameraState);
     }
 
     private void cancelCameraTask() {
@@ -142,6 +172,7 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
             mCamera = Camera.open(mCameraId);
             Camera.Parameters params = mCamera.getParameters();
             mCamera.setPreviewCallback(mPreview);
+            mCamera.setDisplayOrientation(90);
             if (mResolutionWidth == 0 || mResolutionHeight == 0) {
                 setCameraState(CAMERA_STATE.ERROR);
             } else {

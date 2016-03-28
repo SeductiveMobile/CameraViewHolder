@@ -7,6 +7,8 @@ import android.util.AttributeSet;
 import android.view.TextureView;
 import android.view.View;
 
+import com.seductive.tools.cameraholder.utils.UIUtils;
+
 /**
  * Extended class for displaying a content stream. The class provides view transformation due to
  * chosen resolution, with keeping proportions.
@@ -79,6 +81,12 @@ public class AutoFitTextureView extends TextureView {
             setMeasuredDimension(width, height);
         } else {
             if (width < height * mRatioWidth / mRatioHeight) {
+                setMeasuredDimension(width, width * mRatioHeight / mRatioWidth);
+            } else {
+                setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);
+            }
+
+            if (width > height * mRatioWidth / mRatioHeight) {
                 setMeasuredDimension(width, width * mRatioHeight / mRatioWidth);
             } else {
                 setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);

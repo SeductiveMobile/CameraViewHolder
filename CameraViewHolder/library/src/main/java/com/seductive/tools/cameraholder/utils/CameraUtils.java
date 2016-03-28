@@ -24,8 +24,32 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Provides common methods for getting front/back facing camera ids,
+ * checking availability of front/back facing cameras, receiving available output sizes for cameras
+ * and converting output previews between formats.
+ * Class allows to work both with camera1 api and camera2 APIs. Camera2 API is available for
+ * Android Lollipop and above; to use any on methods below, you should check current Android
+ * version using {@link android.os.Build.VERSION and android.os.Build.VERSION_CODES}.
+ *
+ * @see Camera
+ * @see CameraManager
+ * @see CameraCharacteristics
+ */
 public final class CameraUtils {
 
+    //TODO
+    public static boolean isResolutionValid(int previewWidth, int previewHeight) {
+        return false;
+    }
+
+    /**
+     * Is used for Camera1 API.
+     * Returns id of back facing camera using {@link Camera} and
+     * {@link android.hardware.Camera.CameraInfo}.
+     *
+     * @return id of back facing camera if exists; -1 otherwise.
+     */
     public static int getBackFacingCameraId() {
         int numberOfCameras = Camera.getNumberOfCameras();
         for (int i = 0; i < numberOfCameras; i++) {
@@ -38,6 +62,13 @@ public final class CameraUtils {
         return -1;
     }
 
+    /**
+     * Is used for Camera1 API.
+     * Returns id of front facing camera using {@link Camera} and
+     * {@link android.hardware.Camera.CameraInfo}.
+     *
+     * @return id of front facing camera if exists; -1 otherwise.
+     */
     public static int getFrontFacingCameraId() {
         int numberOfCameras = Camera.getNumberOfCameras();
         for (int i = 0; i < numberOfCameras; i++) {
@@ -50,26 +81,73 @@ public final class CameraUtils {
         return -1;
     }
 
+    /**
+     * Is used for Camera1 API.
+     * Checks if front facing camera is exists.
+     *
+     * @return true if exists, false otherwise.
+     */
     public static boolean isFrontFacingCameraAvailable() {
         return CameraUtils.getFrontFacingCameraId() != -1;
     }
 
+    /**
+     * Is used for Camera1 API.
+     * Returns list of supported video sizes for front facing camera. If camera is not exists or
+     * busy by other process, returned list will be empty.
+     *
+     * @return list of {@link android.hardware.Camera.Size} for front facing camera
+     */
     public static List<Camera.Size> getSupportedVideoSizesForFrontCamera() {
         return getSupportedVideoSizesForCameraId(getFrontFacingCameraId());
     }
 
+    /**
+     * Is used for Camera1 API.
+     * Returns list of supported video sizes for back facing camera. If camera is not exists or
+     * busy by other process, returned list will be empty.
+     *
+     * @return list of {@link android.hardware.Camera.Size} for back facing camera
+     */
     public static List<Camera.Size> getSupportedVideoSizesForBackCamera() {
         return getSupportedVideoSizesForCameraId(getBackFacingCameraId());
     }
 
+    /**
+     * Is used for Camera2 API only.
+     * Returns list of supported video sizes for back facing camera. If camera is not exists or
+     * busy by other process, returned list will be empty.
+     *
+     * @param context current Context instance
+     * @return list of {@link Size} for back facing camera
+     */
     public static List<Size> getSupportedOutputSizesForBackCamera2(Context context) {
         return getSupportedOutputSizesForCamera2Id(context, getBackFacingCameraId());
     }
 
+    /**
+     * Is used for Camera2 API only.
+     * Returns list of supported video sizes for front facing camera. If camera is not exists or
+     * busy by other process, returned list will be empty.
+     *
+     * @param context current Context instance
+     * @return list of {@link Size} for front facing camera
+     */
     public static List<Size> getSupportedOutputSizesForFrontCamera2(Context context) {
         return getSupportedOutputSizesForCamera2Id(context, getFrontFacingCameraId());
     }
 
+    /**
+     * Is used for Camera1 API.
+     * Returns list of supported video sizes for camera with cameraId. Method use
+     * {@link Camera} to access required hardware camera. If camera is busy by other
+     * process, RuntimeException is thrown and method returns empty list.
+     *
+     * @param cameraId the hardware camera to access, between 0 and {number of available
+     *                 cameras - 1};
+     * @return list of available {@link android.hardware.Camera.Size} if
+     * {@link Camera was opened correctly}, empty list - otherwise.
+     */
     public static List<Camera.Size> getSupportedVideoSizesForCameraId(int cameraId) {
         List<Camera.Size> sizes = new ArrayList<>();
         Camera camera = null;
@@ -88,6 +166,25 @@ public final class CameraUtils {
         return sizes;
     }
 
+    /**
+     * Is used for Camera2 API ony.
+     * Returns list of supported video sizes for camera with cameraId. Method use
+     * {@link CameraManager} to access required {@link CameraCharacteristics}.
+     * CameraCharacteristics instance for camera contains {@link StreamConfigurationMap}. With method
+     * StreamConfigurationMap#getOutputSizes(Class<T> klass) we receive list of available video
+     * output sizes and add only values less or equals to device screen heigth/width values.
+     * According to usage of this method, if we allow to return any of available output sized,
+     * some of high-quality resolutions could have problems with rendering when it'll set as
+     * preview size.
+     * If camera is busy by other process, RuntimeException is thrown and method returns empty list.
+     *
+     * @param context  Context to get camera system service with.
+     * @param cameraId the hardware camera to access, between 0 and {number of available
+     *                 cameras - 1};
+     * @return list of available {@link Size} if
+     * {@link android.hardware.camera2.CameraAccessException} won't be thrown while open camera,
+     * empty list - otherwise.
+     */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private static List<Size> getSupportedOutputSizesForCamera2Id(Context context, int cameraId) {
         List<Size> result = new ArrayList<>();
@@ -101,8 +198,8 @@ public final class CameraUtils {
                             streamConfigurationMap.getOutputSizes(SurfaceTexture.class) : null;
                     if (sizes != null) {
                         for (Size size : sizes) {
-                            //TODO get screen width/height for device
-                            if (size.getHeight() <= 1080 && size.getWidth() <= 1920) {
+                            if (size.getHeight() <= UIUtils.getScreenWidth(context)
+                                    && size.getWidth() <= UIUtils.getScreenHeight(context)) {
                                 result.add(size);
                             }
                         }
@@ -115,8 +212,18 @@ public final class CameraUtils {
         return result;
     }
 
+    /**
+     * Is used for Camera2 API ony.
+     * See {@link android.hardware.camera2.CameraCharacteristics.Key#INFO_SUPPORTED_HARDWARE_LEVEL_FULL}
+     * and {@link }
+     *
+     * @param context
+     * @param cameraId
+     * @return true if SDK version >= {@link Build.VERSION_CODES#LOLLIPOP} and support advanced
+     * features
+     */
     public static boolean isCameraFocusAvailable(Context context, int cameraId) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             return false;
         }
         CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
@@ -126,7 +233,9 @@ public final class CameraUtils {
                     CameraCharacteristics characteristics = manager.getCameraCharacteristics(id);
                     Object infoSuppHardwareLevelObj = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
 
-                    return infoSuppHardwareLevelObj != null && (int) infoSuppHardwareLevelObj == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL;
+                    return infoSuppHardwareLevelObj != null &&
+                            (int) infoSuppHardwareLevelObj ==
+                                    CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL;
                 }
             }
         } catch (Exception e) {
@@ -347,7 +456,7 @@ public final class CameraUtils {
     }
 
     /**
-     * Converts YUV420 NV21 to Y888 (RGB8888). The grayscale image still holds 3 bytes on the pixel.
+     * Converts YUV420 NV21 to Y888 (RGB8888). The gray scale image still holds 3 bytes on the pixel.
      *
      * @param pixels output array with the converted array o grayscale pixels
      * @param data   byte array on YUV420 NV21 format.
