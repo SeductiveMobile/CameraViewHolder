@@ -18,9 +18,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,11 +34,6 @@ import java.util.List;
  * @see CameraCharacteristics
  */
 public final class CameraUtils {
-
-    //TODO
-    public static boolean isResolutionValid(int previewWidth, int previewHeight) {
-        return false;
-    }
 
     /**
      * Is used for Camera1 API.
@@ -217,8 +209,9 @@ public final class CameraUtils {
      * See {@link android.hardware.camera2.CameraCharacteristics.Key#INFO_SUPPORTED_HARDWARE_LEVEL_FULL}
      * and {@link }
      *
-     * @param context
-     * @param cameraId
+     * @param context  Context to get camera system service with.
+     * @param cameraId the hardware camera to access, between 0 and {number of available
+     *                 cameras - 1};
      * @return true if SDK version >= {@link Build.VERSION_CODES#LOLLIPOP} and support advanced
      * features
      */
@@ -244,21 +237,13 @@ public final class CameraUtils {
         return false;
     }
 
-
-    public static void writeIntArray(int[] array, String file) throws IOException {
-        FileOutputStream fos = new FileOutputStream(file);
-        try {
-            ByteBuffer byteBuff = ByteBuffer.allocate((Integer.SIZE / Byte.SIZE) * array.length);
-            IntBuffer intBuff = byteBuff.asIntBuffer();
-            intBuff.put(array);
-            intBuff.flip();
-            FileChannel fc = fos.getChannel();
-            fc.write(byteBuff);
-        } finally {
-            fos.close();
-        }
-    }
-
+    /**
+     * Method for saving byte array into file;
+     *
+     * @param data     the byte array which should be saved.
+     * @param fileName the path to destination file.
+     * @throws IOException
+     */
     public static void saveImageBytes(byte[] data, String fileName) throws IOException {
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(fileName));
         bos.write(data);
@@ -415,6 +400,15 @@ public final class CameraUtils {
         }
     }
 
+    /**
+     * Converts YUV image in byte array to bitmap by converting every pixel
+     *
+     * @param data   YUV image data
+     * @param width  destination image width
+     * @param height destination image heigth
+     * @param crop   target image params
+     * @return converted image in Bitmap
+     */
     public static Bitmap convertYUV(byte[] data, int width, int height, Rect crop) {
         if (crop == null) {
             crop = new Rect(0, 0, width, height);

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -22,7 +23,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
@@ -68,6 +68,8 @@ public class Camera2Handler implements ICameraHandler {
     private Settings settings;
     private float mFocus;
 
+    private boolean isSingleCapture;
+
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
 
         @Override
@@ -91,7 +93,10 @@ public class Camera2Handler implements ICameraHandler {
         }
     };
 
-    private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
+    /**
+     * Stub callback for repeating request
+     */
+    private CameraCaptureSession.CaptureCallback mStreamCallback = new CameraCaptureSession.CaptureCallback() {
         private void process(CaptureResult result) {
         }
 
@@ -105,7 +110,27 @@ public class Camera2Handler implements ICameraHandler {
         public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request,
                                        @NonNull TotalCaptureResult result) {
             process(result);
-            Log.d("TAG", "onCaptureCompleted");
+        }
+    };
+
+    /**
+     * Stub callback for single capture request
+     */
+    private CameraCaptureSession.CaptureCallback mSingleCaptureCallback = new CameraCaptureSession.CaptureCallback() {
+        private void process(CaptureResult result) {
+
+        }
+
+        @Override
+        public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request,
+                                        @NonNull CaptureResult partialResult) {
+            process(partialResult);
+        }
+
+        @Override
+        public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request,
+                                       @NonNull TotalCaptureResult result) {
+            process(result);
         }
     };
 
@@ -135,13 +160,25 @@ public class Camera2Handler implements ICameraHandler {
         }
     };
 
+    /**
+     * Callback for every preview frame that was received while repeating camera requests
+     * (using {@link CameraCaptureSession#setRepeatingRequest(CaptureRequest, CameraCaptureSession.CaptureCallback, Handler)})
+     * or captured by related method
+     * ({@link CameraCaptureSession#capture(CaptureRequest, CameraCaptureSession.CaptureCallback, Handler)}).
+     * <p>
+     * The image is received in YUV format. Due to expected jpeg format in byte array, we use {@link GetBitmapRunnable}
+     * to convert received image. Image could be converted into other formats using methods from
+     * {@link CameraUtils} but in current version we support only {@link CameraUtils#convertYUV(byte[], int, int, Rect)}.
+     * Single image will be proceeded and sent to all capture listeners only if isSingleCapture flag is true.
+     * It's set in {@link this#mSingleCaptureCallback}.
+     */
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
         @Override
         public void onImageAvailable(ImageReader reader) {
-            Image img = null;
-            img = reader.acquireLatestImage();
+            Image img;
+            img = reader.acquireNextImage();
             try {
-                if (img == null) throw new NullPointerException("cannot be null");
+                if (img == null) return;
                 Image.Plane Y = img.getPlanes()[0];
                 Image.Plane U = img.getPlanes()[1];
                 Image.Plane V = img.getPlanes()[2];
@@ -155,10 +192,13 @@ public class Camera2Handler implements ICameraHandler {
                 Y.getBuffer().get(data, 0, Yb);
                 U.getBuffer().get(data, Yb, Ub);
                 V.getBuffer().get(data, Yb + Ub, Vb);
-                if (mCameraCaptureListener != null) {
-                    mCameraCaptureListener.onStreamPreviewReceived(data);
+                if (mCameraCaptureListener != null && isSingleCapture) {
+                    isSingleCapture = false;
+                    mCaptureSession.stopRepeating();
+                    mCameraCaptureListener.onSinglePreviewReceived(data, CameraCaptureListener.Format.YUV);
+                    startPreviewSession();
                 }
-            } catch (NullPointerException ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace();
             } finally {
                 if (img != null) {
@@ -193,11 +233,6 @@ public class Camera2Handler implements ICameraHandler {
     }
 
     @Override
-    public void setFocus(float focus) {
-        mFocus = focus;
-    }
-
-    @Override
     public void openCamera() {
         if (mCurrCameraState != CAMERA_STATE.IDLE) {
             mRequestedCameraState = CAMERA_STATE.OPEN;
@@ -219,7 +254,9 @@ public class Camera2Handler implements ICameraHandler {
     public void takePicture() {
         if (mCaptureSession != null) {
             try {
-                mCaptureSession.capture(mPreviewRequest, mCaptureCallback, mBackgroundHandler);
+                isSingleCapture = true;
+                mCaptureSession.stopRepeating();
+                mCaptureSession.capture(mPreviewRequest, mSingleCaptureCallback, mBackgroundHandler);
             } catch (CameraAccessException e) {
                 e.printStackTrace();
             }
@@ -298,8 +335,7 @@ public class Camera2Handler implements ICameraHandler {
 
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
-                                mCaptureSession.setRepeatingRequest(mPreviewRequest,
-                                        mCaptureCallback, mBackgroundHandler);
+                                startPreviewSession();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -320,6 +356,15 @@ public class Camera2Handler implements ICameraHandler {
         if (mFlashSupported) {
             requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+        }
+    }
+
+    private void startPreviewSession() {
+        try {
+            mCaptureSession.setRepeatingRequest(mPreviewRequest,
+                    mStreamCallback, mBackgroundHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
         }
     }
 

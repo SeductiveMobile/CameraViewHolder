@@ -3,6 +3,12 @@
 
     <data>
 
+        <import type="android.view.View" />
+
+        <variable
+            name="loading"
+            type="boolean" />
+
         <variable
             name="settings"
             type="com.seductive.tools.cameraholder.sample.ui.model.CameraSettingsViewModel" />
@@ -23,15 +29,21 @@
             android:id="@+id/take_picture"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
             android:layout_alignParentBottom="true"
-            android:src="@drawable/ic_camera"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/btn_bg"
+            android:paddingBottom="3dp"
             android:paddingLeft="20dp"
             android:paddingRight="20dp"
             android:paddingTop="3dp"
-            android:paddingBottom="3dp"
-            android:layout_marginBottom="10dp" />
+            android:src="@drawable/ic_camera" />
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="@{loading ? View.VISIBLE : View.GONE}" />
 
     </RelativeLayout>
 </layout>

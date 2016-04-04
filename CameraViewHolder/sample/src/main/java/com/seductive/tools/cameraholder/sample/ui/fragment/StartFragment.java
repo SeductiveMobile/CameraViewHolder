@@ -44,6 +44,5 @@ public class StartFragment extends Fragment {
 
     public void hideLoadingDueToError() {
 //        bindingObject.setLoadingResolutions(false);
-        //TODO
     }
 }

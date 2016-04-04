@@ -49,7 +49,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         this.mHolder.addCallback(this);
     }
 
-    //TODO validate preview params
     public void setPreviewParams(int previewWidth, int previewHeight) {
         this.mPreviewWidth = previewWidth <= 0 ? UIUtils.getScreenWidth(getContext()) : previewWidth;
         this.mPreviewHeight = previewHeight <= 0 ? UIUtils.getScreenHeight(getContext()) : previewHeight;
@@ -182,11 +181,15 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             float widthRatio = (float) actualWidth / mPreviewWidth;
             float heightRatio = (float) actualHeight / mPreviewHeight;
 
-            float maxRatio = Math.max(widthRatio, heightRatio);
+            if (widthRatio != heightRatio) {
+                float maxRatio = Math.max(widthRatio, heightRatio);
 
-            int scaledWidth = (int) (mPreviewWidth * maxRatio);
-            int scaledHeight = (int) (mPreviewHeight * maxRatio);
-            setMeasuredDimension(scaledWidth, scaledHeight);
+                int scaledWidth = (int) (mPreviewWidth * maxRatio);
+                int scaledHeight = (int) (mPreviewHeight * maxRatio);
+                setMeasuredDimension(scaledWidth, scaledHeight);
+            } else {
+                setMeasuredDimension(mPreviewWidth, mPreviewHeight);
+            }
         }
     }
 }

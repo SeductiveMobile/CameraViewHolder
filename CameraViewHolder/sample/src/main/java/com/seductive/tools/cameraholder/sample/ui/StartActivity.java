@@ -70,15 +70,16 @@ public class StartActivity extends AppCompatActivity implements OnStartBtnClickL
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        EventBus.getDefault().register(this);
+    protected void onStart() {
+        super.onStart();
+        EventBus.getDefault().registerSticky(this);
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
         EventBus.getDefault().unregister(this);
+        EventBus.getDefault().removeAllStickyEvents();
     }
 
     @Override

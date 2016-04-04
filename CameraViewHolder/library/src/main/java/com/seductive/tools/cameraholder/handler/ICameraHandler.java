@@ -16,6 +16,13 @@ import com.seductive.tools.cameraholder.model.Settings;
  */
 public interface ICameraHandler {
 
+    /**
+     * IDLE - camera is available for main actions, but not opened
+     * OPENING - camera opening task is in progress
+     * OPEN - successfully opened
+     * CLOSING - camera closing task is in progress
+     * ERROR - error was captured while opening camera
+     */
     enum CAMERA_STATE {
         IDLE, OPENING, OPEN, CLOSING, ERROR
     }
@@ -59,7 +66,7 @@ public interface ICameraHandler {
     void takePicture();
 
     /**
-     *
+     * Methor for asynchronous closing camera.
      */
     void closeCamera();
 
@@ -67,11 +74,4 @@ public interface ICameraHandler {
      * This method will release all references and resources.
      */
     void release();
-
-    /**
-     * For Walkthrough feature we need to provide focus parameter apart of settings Settings
-     *
-     * @param focus
-     */
-    void setFocus(float focus);
 }

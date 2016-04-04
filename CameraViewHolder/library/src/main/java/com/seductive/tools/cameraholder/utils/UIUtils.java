@@ -33,7 +33,7 @@ public final class UIUtils {
      */
     public static int getScreenHeight(Context context) {
         Point point = new Point();
-        ((WindowManager)context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRealSize(point);
+        ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getSize(point);
         return point.y;
     }
 
@@ -53,7 +53,7 @@ public final class UIUtils {
     }
 
     /**
-     *
+     * If Toast message is shown, method hides and cancels it
      */
     public static void cancelToastMsg() {
         if (toast != null) {

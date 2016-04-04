@@ -1,5 +1,21 @@
 package com.seductive.tools.cameraholder.model;
 
+import android.content.Context;
+
+import com.seductive.tools.cameraholder.utils.UIUtils;
+
+/**
+ * Class provides parameters for configuration both camera1 and camera2.
+ * <p>
+ * Warning:
+ * 1. focal length {@link Settings#focus} could be used only for camera2 and it's ignored
+ * otherwise;
+ * 2. Resolution params ({@link Settings#resolution} or {@link Settings#resolutionWidth} and
+ * {@link Settings#resolutionHeight}) must be set only after receiving results from
+ * {@link com.seductive.tools.cameraholder.utils.CameraUtils} methods for getting available
+ * resolution sizes. Preview option is limited by these default values and camera could be opened
+ * correctly only if preview params are exists in inner resolution sizes list.
+ */
 public class Settings {
 
     public enum CAMERA_TYPE {
@@ -25,6 +41,23 @@ public class Settings {
     private int resolutionWidth;
     private boolean backCameraFocusAvailable;
     private boolean frontCameraFocusAvailable;
+
+    /**
+     * Method provides default instance if user didn't set custom one.
+     *
+     * @param context
+     * @return
+     */
+    public static Settings getDefault(Context context) {
+        Settings settings = new Settings();
+        settings.backCameraFocusAvailable = false;
+        settings.frontCameraFocusAvailable = false;
+        settings.cameraType = CAMERA_TYPE.BACK;
+        settings.resolutionHeight = UIUtils.getScreenHeight(context);
+        settings.resolutionWidth = UIUtils.getScreenWidth(context);
+
+        return settings;
+    }
 
     public float getFocus() {
         return focus;

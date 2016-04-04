@@ -11,15 +11,31 @@ import com.seductive.tools.cameraholder.handler.ICameraHandler;
 import com.seductive.tools.cameraholder.model.Settings;
 import com.seductive.tools.cameraholder.ui.camera1.CameraPreview;
 import com.seductive.tools.cameraholder.utils.CameraUtils;
-import com.seductive.tools.cameraholder.utils.UIUtils;
 
+/**
+ * The Camera1Handler class is used for making the main actions with camera1 api hardware instance.
+ *
+ * @see Camera for deeper explanation of camera1 available options.
+ */
 public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUpdateListener {
 
     private Context mContext;
 
+    /**
+     * Resolution params that should be set from available ones.
+     * See {@link CameraUtils#getSupportedVideoSizesForBackCamera()} and
+     * {@link CameraUtils#getSupportedVideoSizesForFrontCamera()}
+     */
     private int mResolutionWidth;
     private int mResolutionHeight;
+
+    /**
+     * Hardware camera id.
+     * See {@link CameraUtils#getBackFacingCameraId()} and
+     * {@link CameraUtils#getFrontFacingCameraId()}
+     */
     private int mCameraId;
+
     private Camera mCamera;
     private CameraPreview mPreview;
     private OpenCameraTask mOpenCameraTask;
@@ -28,12 +44,13 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
     private CAMERA_STATE mCurrCameraState = CAMERA_STATE.IDLE;
     private CAMERA_STATE mRequestedCameraState;
 
-    private Camera.PictureCallback mJpegPictureCallback=new Camera.PictureCallback() {
+    private Camera.PictureCallback mJpegPictureCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
             if (mCameraCaptureListener != null) {
-                mCameraCaptureListener.onSinglePreviewReceived(data);
+                mCameraCaptureListener.onSinglePreviewReceived(data, CameraCaptureListener.Format.JPEG);
             }
+            mCamera.startPreview();
         }
     };
 
@@ -49,16 +66,10 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
 
         mPreview.setPreviewParams(mResolutionWidth, mResolutionHeight);
         mPreview.setPreviewUpdateListener(this);
-        //TODO validate preview size
-        if (settings == null) {
-            mResolutionWidth = UIUtils.getScreenWidth(mContext);
-            mResolutionHeight = UIUtils.getScreenHeight(mContext);
-        } else {
-            mResolutionWidth = settings.getResolutionWidth();
-            mResolutionHeight = settings.getResolutionHeight();
-        }
+        mResolutionWidth = settings.getResolutionWidth();
+        mResolutionHeight = settings.getResolutionHeight();
 
-        this.mCameraId = settings == null || settings.isCameraTypeBack() ?
+        this.mCameraId = settings.isCameraTypeBack() ?
                 CameraUtils.getBackFacingCameraId() : CameraUtils.getFrontFacingCameraId();
         this.mCameraStateListener = cameraStateListener;
         this.mCameraCaptureListener = cameraCaptureListener;
@@ -87,9 +98,6 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
 
     @Override
     public void onUpdatePreview(byte[] previewData) {
-        if (mCameraCaptureListener != null) {
-            mCameraCaptureListener.onStreamPreviewReceived(previewData);
-        }
     }
 
     @Override
@@ -106,11 +114,6 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
     @Override
     public void release() {
 
-    }
-
-    @Override
-    public void setFocus(float focus) {
-        //stub
     }
 
     private void setCameraState(CAMERA_STATE newState) {
@@ -135,11 +138,18 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
         notifyListener();
     }
 
+    /**
+     * Sends camera state updates
+     */
     private void notifyListener() {
-        if (mCameraStateListener != null)
+        if (mCameraStateListener != null) {
             mCameraStateListener.onStateChanged(mCurrCameraState);
+        }
     }
 
+    /**
+     * If handler started to open camera, method interrupted the process
+     */
     private void cancelCameraTask() {
         if (mOpenCameraTask != null) {
             mOpenCameraTask.cancel(true);
@@ -147,6 +157,10 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
         }
     }
 
+    /**
+     * Task for open hardware Camera in separate thread. If error while opening occurs,
+     * task will notify handler by error state and will try to close camera.
+     */
     private class OpenCameraTask extends BaseAsyncTask<Void, Void, Void> {
 
         @Override
@@ -185,6 +199,9 @@ public class Camera1Handler implements ICameraHandler, CameraPreview.OnPreviewUp
         }
     }
 
+    /**
+     * Asynchronously closes camera.
+     */
     private class CameraCloseRunnable implements Runnable {
         @Override
         public void run() {

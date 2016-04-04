@@ -40,7 +40,7 @@ public final class SharedPreferencesUtil {
 
         SharedPreferences preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         model.setCameraType(Settings.CAMERA_TYPE.values()[preferences.getInt(CAMERA_SELECTION, Settings.CAMERA_TYPE.BACK.ordinal())]);
-        model.setResolution(preferences.getString(CACHED_RESOLUTION, "")); //TODO
+        model.setResolution(preferences.getString(CACHED_RESOLUTION, ""));
         model.setFocus(Float.valueOf(preferences.getString(CACHED_FOCUS, "1.0")));
         model.setResolutionWidth(preferences.getInt(CACHED_RESOLUTION_WIDTH, 0));
         model.setResolutionHeight(preferences.getInt(CACHED_RESOLUTION_HEIGHT, 0));

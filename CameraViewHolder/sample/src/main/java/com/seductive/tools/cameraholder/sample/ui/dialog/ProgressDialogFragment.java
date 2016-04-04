@@ -1,43 +1,50 @@
 package com.seductive.tools.cameraholder.sample.ui.dialog;
 
 import android.app.Dialog;
-import android.app.ProgressDialog;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
+import android.support.v7.app.AlertDialog;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
+
+import com.seductive.tools.cameraholder.sample.R;
 
 public class ProgressDialogFragment extends DialogFragment {
 
-    private static final String PROVIDED_MESSAGE = "provided_message";
-    private static final String PROVIDED_MODE = "provided_mode";
+    public static final String TAG = ProgressDialogFragment.class.getSimpleName();
 
-    public static ProgressDialogFragment newInstance(String title, String message) {
-        ProgressDialogFragment dialogFragment = new ProgressDialogFragment();
-        Bundle bundle = new Bundle();
-        bundle.putString(PROVIDED_MESSAGE, message);
-        dialogFragment.setArguments(bundle);
-        return dialogFragment;
+    private Bitmap mBitmap;
+
+    public static ProgressDialogFragment newInstance(Bitmap jpgBitmap) {
+        return new ProgressDialogFragment().setResultBitmap(jpgBitmap);
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        boolean isModal = getArguments().getBoolean(PROVIDED_MODE, false);
-        setCancelable(!isModal);
+        setCancelable(true);
     }
 
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        ProgressDialog dialog = new ProgressDialog(getActivity(), getTheme());
-        dialog.setMessage(getArguments().getString(PROVIDED_MESSAGE));
-        dialog.setIndeterminate(true);
-        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        return dialog;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_view, null);
+        if (mBitmap != null) {
+            ((ImageView) dialogView.findViewById(R.id.capture_result_iv)).setImageBitmap(mBitmap);
+            dialogView.findViewById(R.id.progress_tv).setVisibility(View.INVISIBLE);
+        }
+
+        return builder.setView(dialogView).create();
     }
 
-    public ProgressDialogFragment setModal(boolean value) {
-        getArguments().putBoolean(PROVIDED_MODE, value);
+    private ProgressDialogFragment setResultBitmap(Bitmap jpgBitmap) {
+        this.mBitmap = jpgBitmap;
         return this;
     }
 }
